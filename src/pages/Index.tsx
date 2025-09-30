@@ -3,6 +3,7 @@ import { Features } from "@/components/Features";
 import { Story } from "@/components/Story";
 import { Applications } from "@/components/Applications";
 import { Evolution } from "@/components/Evolution";
+import Future from "@/components/Future";
 
 const Index = () => {
   return (
@@ -42,6 +43,7 @@ const Index = () => {
       <Story />
       <Applications />
       <Evolution />
+      <Future />
 
       {/* Demo/Media section */}
       <section className="py-20 relative">
