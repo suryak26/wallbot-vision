@@ -1,4 +1,6 @@
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Box, Camera, Brain, Shield, Wifi } from "lucide-react";
 
 const stages = [
@@ -40,6 +42,8 @@ const stages = [
 ];
 
 export const Evolution = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 relative">
       <div className="container mx-auto px-4">
@@ -78,9 +82,24 @@ export const Evolution = () => {
                     <p className="text-sm text-muted-foreground">{stage.description}</p>
                   </div>
 
+                  <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
+                    <p className="text-xs text-muted-foreground text-center italic">
+                      3D model thumbnail
+                    </p>
+                  </div>
+
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {stage.details}
                   </p>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate("/explore")}
+                  >
+                    View 3D Model
+                  </Button>
                 </Card>
               </div>
             ))}

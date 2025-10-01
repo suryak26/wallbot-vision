@@ -45,6 +45,38 @@ const Index = () => {
       <Evolution />
       <Future />
 
+      {/* Demo/Media section */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Demo & <span className="gradient-text">Prototype</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {[
+              { label: "Video Demo 1", type: "mp4" },
+              { label: "Video Demo 2", type: "mp4" },
+              { label: "Prototype Image", type: "jpg" }
+            ].map((slot, index) => (
+              <div
+                key={slot.label}
+                className="glass-card p-8 rounded-xl aspect-video flex flex-col items-center justify-center gap-4 border-dashed animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <p className="text-sm text-muted-foreground text-center italic">
+                  {slot.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Add {slot.type} file here
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA section */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4">
