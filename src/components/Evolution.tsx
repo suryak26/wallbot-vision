@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Box, Camera, Brain, Shield, Wifi } from "lucide-react";
+import { Box, Camera, Brain, Shield, Wifi, ChevronDown, Image, Video } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
 const stages = [
   {
@@ -9,40 +10,56 @@ const stages = [
     title: "Prototype",
     description: "Initial suction mechanism testing and wheel configuration",
     icon: Box,
-    details: "First working model with basic vacuum pump and motor control"
+    details: "First working model with basic vacuum pump and motor control",
+    mediaTypes: [
+      { type: "photo", label: "Prototype Photo" },
+      { type: "video", label: "Prototype Video" }
+    ]
   },
   {
     id: "esp32cam",
     title: "ESP32-CAM",
     description: "Integrated live video streaming for remote monitoring",
     icon: Camera,
-    details: "Added real-time camera feed with WiFi streaming capability"
+    details: "Added real-time camera feed with WiFi streaming capability",
+    mediaTypes: [
+      { type: "video", label: "ESP32-CAM Video Demo" }
+    ]
   },
   {
     id: "tinyml",
     title: "TinyML Integration",
     description: "Onboard AI model for crack and defect detection",
     icon: Brain,
-    details: "Edge inference enables instant alerts without cloud dependency"
+    details: "Edge inference enables instant alerts without cloud dependency",
+    mediaTypes: [
+      { type: "image", label: "TinyML Architecture" }
+    ]
   },
   {
     id: "safety",
     title: "Safety Systems",
     description: "Edge detection, emergency stop, and tether monitoring",
     icon: Shield,
-    details: "Multi-layered protection ensures zero-accident operation"
+    details: "Multi-layered protection ensures zero-accident operation",
+    mediaTypes: [
+      { type: "image", label: "Safety Systems Diagram" }
+    ]
   },
   {
     id: "dashboard",
     title: "Dashboard & OTA",
     description: "Full control interface with over-the-air updates",
     icon: Wifi,
-    details: "Remote operation, telemetry visualization, and wireless firmware updates"
+    details: "Remote operation, telemetry visualization, and wireless firmware updates",
+    mediaTypes: [
+      { type: "image", label: "Dashboard Interface" }
+    ]
   }
 ];
 
 export const Evolution = () => {
-  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <section className="py-20 relative">
@@ -82,28 +99,70 @@ export const Evolution = () => {
                     <p className="text-sm text-muted-foreground">{stage.description}</p>
                   </div>
 
-                  <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
-                    <p className="text-xs text-muted-foreground text-center italic">
-                      3D model thumbnail
-                    </p>
-                  </div>
-
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {stage.details}
                   </p>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => navigate("/explore")}
-                  >
-                    View 3D Model
-                  </Button>
                 </Card>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Demonstration Section */}
+        <div className="max-w-4xl mx-auto mt-16">
+          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="w-full md:w-auto mx-auto flex items-center gap-2 group transition-all duration-300 hover:scale-105"
+              >
+                Demonstration
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent className="mt-8 space-y-8 animate-fade-in">
+              {stages.map((stage, index) => (
+                <div 
+                  key={stage.id}
+                  className="glass-card p-6 rounded-xl space-y-4 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                      <stage.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">{stage.title}</h3>
+                      <p className="text-xs text-muted-foreground">{stage.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {stage.mediaTypes.map((media, mediaIndex) => (
+                      <div 
+                        key={mediaIndex}
+                        className="group relative aspect-video rounded-lg border-2 border-dashed border-border/50 bg-muted/20 hover:bg-muted/30 hover:border-primary/50 transition-all duration-300 flex flex-col items-center justify-center gap-3 p-6"
+                      >
+                        {media.type === 'video' ? (
+                          <Video className="w-12 h-12 text-muted-foreground group-hover:text-primary transition-colors" />
+                        ) : (
+                          <Image className="w-12 h-12 text-muted-foreground group-hover:text-primary transition-colors" />
+                        )}
+                        <div className="text-center space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">{media.label}</p>
+                          <p className="text-xs text-muted-foreground/70">
+                            Upload {media.type} here
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
     </section>
