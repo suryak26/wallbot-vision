@@ -41,8 +41,8 @@ export const Hero = () => {
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-                <span className="gradient-text">S4V-WallBot</span>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+                <span className="gradient-text">Roc_tara</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground font-light">
                 Scaling Heights. Detecting Cracks. Ensuring Safety.
@@ -100,7 +100,7 @@ export const Hero = () => {
             <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_80px_hsl(var(--primary)/0.3)]">
               <img
                 src={heroImage}
-                alt="S4V-WallBot autonomous wall-climbing robot"
+                alt="Roc_tara autonomous wall-climbing robot"
                 className="w-full h-auto object-cover animate-float"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
