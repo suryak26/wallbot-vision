@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Magnet, Video, Brain, Shield, Map } from "lucide-react";
+import { Magnet, Video, Radio, Brain, Shield, Map } from "lucide-react";
 
 const features = [
   {
@@ -15,7 +15,7 @@ const features = [
     title: "Wall Adhesion",
     description: "Hybrid suction + wheel mechanism for varied surfaces",
     details: "Advanced pneumatic suction cups combined with motorized wheels provide reliable adhesion on concrete, glass, metal, and composite surfaces. Automatic surface detection adjusts grip strength dynamically.",
-    demoPlaceholder: "Demo: Suction mechanism in action (add GIF)"
+    demoPlaceholder: "/prototype.png"
   },
   {
     id: "video",
@@ -23,15 +23,23 @@ const features = [
     title: "Live Video",
     description: "ESP32-CAM stream to dashboard for remote operators",
     details: "Real-time HD video streaming with low latency (<200ms) enables remote inspection and recording. Adjustable resolution and frame rate optimize bandwidth usage.",
-    demoPlaceholder: "Demo: Live camera feed preview (add video)"
+    demoPlaceholder: "/vision_module.png"
   },
   {
-    id: "tinyml",
+    id: "transmission",
+    icon: Radio,
+    title: "RF Control Loop",
+    description: "Transmitter-Receiver setup for custom configuration",
+    details: "Robust RF communication with dedicated transmitter and receiver modules. Enables easy customization of control mapping and long-range operation even in signal-dense industrial environments.",
+    demoPlaceholder: "/vision_module.png"
+  },
+  {
+    id: "edge",
     icon: Brain,
-    title: "TinyML Detection",
-    description: "Onboard inference for cracks, rust, and leaks",
-    details: "Edge AI model runs directly on ESP32 for instant defect detection. Trained on 10,000+ structural defect images with 99%+ accuracy. No cloud dependency.",
-    demoPlaceholder: "Demo: Defect detection showcase (add sequence)"
+    title: "Edge Diagnostics",
+    description: "Adaptive surface mapping for defect identification",
+    details: "Integrated diagnostic suite that uses low-latency edge processing to classify structural anomalies. Provides immediate visual overlays without the need for high-power compute environments.",
+    demoPlaceholder: "/production.png"
   },
   {
     id: "safety",
@@ -39,7 +47,7 @@ const features = [
     title: "Safety First",
     description: "Edge detection, tether, and stop logic",
     details: "Multi-layered safety: IR edge sensors, emergency stop button, automatic tether tension monitoring, and fall protection algorithms ensure zero accidents.",
-    demoPlaceholder: "Demo: Safety systems overview (add animation)"
+    demoPlaceholder: "/production.png"
   },
   {
     id: "mapping",
@@ -47,7 +55,7 @@ const features = [
     title: "Defect Maps",
     description: "Generate and store inspection overlays for comparisons",
     details: "Automated spatial mapping creates detailed defect overlays with GPS coordinates, timestamps, and severity ratings. Historical comparisons track deterioration over time.",
-    demoPlaceholder: "Demo: 3D defect map visualization (add interactive)"
+    demoPlaceholder: "/production.png"
   }
 ];
 
@@ -90,10 +98,8 @@ export const Features = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {feature.details}
                   </p>
-                  <div className="bg-muted/50 rounded-lg p-4 border border-dashed border-border">
-                    <p className="text-xs text-muted-foreground text-center italic">
-                      {feature.demoPlaceholder}
-                    </p>
+                  <div className="bg-muted/50 rounded-lg overflow-hidden border border-border aspect-video flex items-center justify-center">
+                    <img src={feature.demoPlaceholder} alt={feature.title} className="w-full h-full object-cover" />
                   </div>
                 </AccordionContent>
               </Card>

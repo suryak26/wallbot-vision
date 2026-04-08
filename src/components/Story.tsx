@@ -3,11 +3,9 @@ import { Users } from "lucide-react";
 
 export const Story = () => {
   const teamMembers = [
-    { name: "Surya", role: "Hardware & Mechanics" },
-    { name: "Sakthi", role: "Electronics & IoT" },
-    { name: "Sanjana", role: "AI & Machine Learning" },
-    { name: "Sudesh", role: "Software & Control Systems" },
-    { name: "Vickkraman", role: "Safety & Testing" }
+    { name: "Surya", role: "Hardware, Mechanics & Electronics" },
+    { name: "Sudesh", role: "Software, Control Systems & AI" },
+    { name: "Vickkraman", role: "Safety, Testing & Field Operations" }
   ];
 
   return (
@@ -23,7 +21,7 @@ export const Story = () => {
           <Card className="glass-card p-8 md:p-12 space-y-8 animate-fade-in-up">
             <div className="prose prose-invert max-w-none">
               <p className="text-lg text-muted-foreground leading-relaxed">
-                A student innovation from <span className="text-foreground font-medium">Surya, Sakthi, Sanjana, Sudesh, and Vickkraman</span>; 
+                A student innovation from <span className="text-foreground font-medium">Surya, Sudesh, and Vickkraman</span>; 
                 evolved from prototype suction tests to a full AI + IoT inspection platform.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
@@ -34,13 +32,7 @@ export const Story = () => {
               </p>
             </div>
 
-            {/* Team photo placeholder */}
-            <div className="bg-muted/30 rounded-xl p-8 border border-dashed border-border">
-              <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                <Users className="w-6 h-6" />
-                <p className="text-sm italic">Team photo placeholder - Add your team image here</p>
-              </div>
-            </div>
+
 
             {/* Team roles */}
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">

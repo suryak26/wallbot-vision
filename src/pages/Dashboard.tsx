@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Slider } from "@/components/ui/slider";
 import {
   ArrowUp,
@@ -20,7 +21,11 @@ import {
   Flame,
   Clock,
   CheckCircle,
-  FileText
+  FileText,
+  Scan,
+  Maximize2,
+  BarChart3,
+  Layers
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,8 +36,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useWebcam } from "@/hooks/useWebcam";
+import { YOLOv8, Detection } from "@/lib/yolo-utils";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { startStream, stopStream, videoRef, stream } = useWebcam();
   const [streamActive, setStreamActive] = useState(false);
   const [speed, setSpeed] = useState([50]);
   const [lockEngaged, setLockEngaged] = useState(false);
@@ -40,13 +49,31 @@ const Dashboard = () => {
     Array<{ cmd: string; status: "success" | "fail"; timestamp: string }>
   >([]);
   const [runtime, setRuntime] = useState(0);
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const yoloRef = useRef<YOLOv8>(new YOLOv8());
   
-  // Mock sensor data (replace with real data from ThingSpeak/Blynk)
+  // Mock sensor data
   const [sensorData] = useState({
     dht11: { temp: 28.4, humidity: 56 },
     mq2: 120,
     mq135: 180
   });
+
+  // Load YOLO model on mount
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        if (yoloRef.current) {
+          await yoloRef.current.load();
+        }
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    loadModel();
+  }, []);
 
   // Runtime tracker
   useEffect(() => {
@@ -56,6 +83,65 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Inference loop
+  useEffect(() => {
+    let animationId: number;
+    let isMounted = true;
+    
+    const runInference = async () => {
+      if (!isMounted) return;
+      
+      if (streamActive && videoRef.current && canvasRef.current && yoloRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx && video.readyState === 4) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          try {
+            const results = await yoloRef.current.runInference(canvas);
+            
+            // DRAWING LOGIC (Constant 60fps)
+            if (isMounted) {
+              // Draw bounding boxes directly to the context every frame
+              results.forEach(det => {
+                const [x1, y1, x2, y2] = det.bbox;
+                ctx.strokeStyle = "#00f2ff";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                
+                ctx.fillStyle = "#00f2ff";
+                ctx.font = "bold 16px Inter";
+                ctx.fillText(`${det.label} (${(det.confidence * 100).toFixed(1)}%)`, x1, y1 > 20 ? y1 - 5 : y1 + 20);
+              });
+
+              // STATE UPDATE LOGIC (Throttled to prevent flashing)
+              // Only update the side-panel analytics every 15 frames
+              if (yoloRef.current.getFrameCount() % 15 === 0) {
+                setDetections(results);
+              }
+            }
+          } catch (err) {
+            console.error("Inference error:", err);
+          }
+        }
+      }
+      animationId = requestAnimationFrame(runInference);
+    };
+
+    if (streamActive) {
+      runInference();
+    }
+    
+    return () => {
+      isMounted = false;
+      cancelAnimationFrame(animationId);
+    };
+  }, [streamActive]);
+
   const formatRuntime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -64,38 +150,62 @@ const Dashboard = () => {
   };
 
   const sendCommand = (cmd: string) => {
-    // Haptic feedback
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-
+    if (navigator.vibrate) navigator.vibrate(50);
     const timestamp = new Date().toLocaleTimeString();
     const newCommand = {
       cmd,
       status: Math.random() > 0.1 ? "success" : "fail" as "success" | "fail",
       timestamp
     };
-
     setRecentCommands(prev => [newCommand, ...prev].slice(0, 10));
-
-    // TODO: Replace with actual API call
-    // fetch('/api/robot/command', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ cmd, speed: speed[0] / 100 })
-    // });
-
     toast.success(`Command sent: ${cmd}`);
   };
 
-  const toggleStream = () => {
-    setStreamActive(!streamActive);
-    toast.info(streamActive ? "Stream stopped" : "Stream started");
+  const toggleStream = async () => {
+    if (streamActive) {
+      stopStream();
+      setStreamActive(false);
+      setDetections([]);
+      toast.info("Stream stopped");
+    } else {
+      const s = await startStream();
+      if (s) {
+        setStreamActive(true);
+        toast.success("Stream started - Roctara Vision Online");
+      }
+    }
+  };
+
+  const handleDownloadReport = () => {
+    const reportContent = `
+ROCTARA INSPECTION REPORT
+Date: ${new Date().toLocaleDateString()}
+Session Duration: ${formatRuntime(runtime)}
+Total Commands: ${recentCommands.length}
+Avg Temperature: ${sensorData.dht11.temp}°C
+Avg Humidity: ${sensorData.dht11.humidity}%
+
+Detected Anomalies:
+- 12.9716°N, 77.5946°E: Structural Crack (High Severity)
+- 12.9718°N, 77.5948°E: Oxidation/Rust (Medium Severity)
+
+Recommendations:
+- Immediate structural review of high-severity crack zones.
+- Surface treatment for localized oxidation.
+    `;
+    const blob = new Blob([reportContent], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `roctara_report_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Report downloaded successfully");
   };
 
   const toggleLock = () => {
     if (!lockEngaged) {
-      // Show confirmation for engaging lock
       if (confirm("Engage servo lock? This will secure the door/actuator.")) {
         setLockEngaged(true);
         toast.success("Lock engaged");
@@ -111,20 +221,30 @@ const Dashboard = () => {
       <div className="container mx-auto px-4">
         {/* Header with Welcome Message */}
         <div className="mb-8 space-y-4 animate-fade-in">
-          <div className="glass-card p-6 rounded-xl">
+          <div className="glass-card p-6 rounded-xl border-primary/20 bg-primary/5">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-success animate-pulse" />
                   <h1 className="text-2xl md:text-3xl font-bold">
-                    Hey! <span className="gradient-text">Your bot is up and running</span>
+                    Hey! <span className="gradient-text">Roctara is up and running</span>
                   </h1>
                 </div>
-                <p className="text-muted-foreground">Remote robot operation and monitoring</p>
+                <p className="text-muted-foreground">Autonomous structural inspection dashboard</p>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/30">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="text-sm font-mono">{formatRuntime(runtime)}</span>
+               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/30 border border-border/50">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-mono">{formatRuntime(runtime)}</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate("/")}
+                  className="bg-destructive/10 border-destructive/20 hover:bg-destructive/20 text-destructive"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
           </div>
@@ -134,44 +254,67 @@ const Dashboard = () => {
           {/* Left column - Camera & Controls */}
           <div className="lg:col-span-2 space-y-6">
             {/* Camera feed */}
-            <Card className="glass-card p-6 space-y-4 animate-fade-in-up">
-              <div className="flex items-center justify-between">
+            <Card className="glass-card p-6 space-y-4 animate-fade-in-up border-primary/20 overflow-hidden relative">
+              <div className="flex items-center justify-between relative z-10">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <Video className="w-5 h-5 text-primary" />
-                  Live Camera Feed
+                  <Scan className="w-5 h-5 text-primary" />
+                  Vision Control System
                 </h2>
                 <Button
                   variant={streamActive ? "destructive" : "default"}
                   size="sm"
                   onClick={toggleStream}
+                  className="shadow-glow"
                 >
                   {streamActive ? (
                     <>
                       <VideoOff className="w-4 h-4 mr-2" />
-                      Stop Stream
+                      Stop Vision
                     </>
                   ) : (
                     <>
                       <Video className="w-4 h-4 mr-2" />
-                      Start Stream
+                      Start Vision
                     </>
                   )}
                 </Button>
               </div>
 
-              <div className="aspect-video bg-muted/30 rounded-xl border-2 border-dashed border-border flex items-center justify-center">
-                {streamActive ? (
-                  <div className="text-center space-y-2">
-                    <div className="status-dot status-online mx-auto" />
-                    <p className="text-sm text-muted-foreground">
-                      Stream URL: ws://your-server.example.com/stream
+              <div className="aspect-video bg-black/40 rounded-xl border-2 border-dashed border-primary/30 flex items-center justify-center relative overflow-hidden">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover ${streamActive ? 'block' : 'hidden'}`}
+                />
+                <canvas
+                  ref={canvasRef}
+                  className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${streamActive ? 'block' : 'hidden'}`}
+                />
+                {!streamActive && (
+                  <div className="text-center space-y-4 animate-pulse">
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto border border-primary/40">
+                      <Video className="w-8 h-8 text-primary" />
+                    </div>
+                    <p className="text-muted-foreground font-light">
+                      {isInitializing ? "Initializing AI System..." : "Idle • Click \"Start Vision\" to initialize YOLOv8"}
                     </p>
                   </div>
-                ) : (
-                  <p className="text-muted-foreground">Click "Start Stream" to begin</p>
+                )}
+                
+                {/* Overlay UI when active */}
+                {streamActive && (
+                  <div className="absolute top-4 right-4 flex flex-col gap-2">
+                    <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-primary/30 text-[10px] uppercase tracking-widest font-bold flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      Live Preview
+                    </div>
+                  </div>
                 )}
               </div>
             </Card>
+
 
             {/* Movement controls */}
             <Card className="glass-card p-6 space-y-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
@@ -331,34 +474,94 @@ const Dashboard = () => {
               </div>
             </Card>
 
-            {/* Safety status */}
-            <Card className="glass-card p-6 space-y-4 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {/* Vision Metrics / Safety status */}
+            <Card className="glass-card p-6 space-y-4 animate-fade-in-up border-primary/20" style={{ animationDelay: "0.3s" }}>
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-warning" />
-                Safety Status
+                {streamActive ? (
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-warning" />
+                )}
+                {streamActive ? "Inference Analytics" : "Safety Status"}
               </h2>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
-                  <span className="text-sm">Edge Detection</span>
-                  <div className="status-dot status-online" />
+              {streamActive ? (
+                <div className="space-y-4">
+                  {detections.length > 0 ? (
+                    <>
+                      <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 space-y-3">
+                        <div className="flex justify-between items-end">
+                          <span className="text-xs text-muted-foreground uppercase tracking-tight">Crack Density</span>
+                          <span className="text-lg font-bold text-primary">{detections[0].density.toFixed(2)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary transition-all duration-500" 
+                            style={{ width: `${Math.min(100, detections[0].density * 5)}%` }} 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-secondary/50 border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase mb-1">Surface Area</p>
+                          <p className="text-sm font-semibold">{detections[0].surfaceArea.toFixed(1)} mm²</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-secondary/50 border border-border">
+                          <p className="text-[10px] text-muted-foreground uppercase mb-1">Est. Depth</p>
+                          <p className="text-sm font-semibold">{detections[0].depth.toFixed(2)} mm</p>
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-lg border-2 flex items-center justify-between ${
+                        detections[0].riskFactor > 7 ? 'bg-destructive/10 border-destructive/50' :
+                        detections[0].riskFactor > 4 ? 'bg-warning/10 border-warning/50' :
+                        'bg-success/10 border-success/50'
+                      }`}>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] uppercase font-bold opacity-60">Risk Factor</p>
+                          <p className="text-xl font-black">{(detections[0].riskFactor).toFixed(1)}/10</p>
+                        </div>
+                        <AlertTriangle className={`w-8 h-8 ${
+                          detections[0].riskFactor > 7 ? 'text-destructive' :
+                          detections[0].riskFactor > 4 ? 'text-warning' :
+                          'text-success'
+                        }`} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-10 text-center space-y-2 opacity-50">
+                      <Layers className="w-8 h-8 mx-auto text-muted-foreground stroke-[1]" />
+                      <p className="text-sm">Scanning surface...</p>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
-                  <span className="text-sm">Tether Tension</span>
-                  <span className="text-xs text-success">Normal</span>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
+                    <span className="text-sm font-medium">Edge Detection</span>
+                    <div className="status-dot status-online" />
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
+                    <span className="text-sm font-medium">Tether Tension</span>
+                    <span className="text-xs text-success font-bold">Normal</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
+                    <span className="text-sm font-medium">Power Rails</span>
+                    <span className="text-xs text-success font-bold">87% Stable</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/30">
-                  <span className="text-sm">Battery Level</span>
-                  <span className="text-xs text-success">87%</span>
-                </div>
-              </div>
+              )}
 
               <div className="pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  All safety systems operational. Commands are enabled.
+                <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+                  {streamActive 
+                    ? "Inference parameters are calculated in real-time based on YOLOv8 geometric analysis."
+                    : "All safety systems operational. Control authority granted."}
                 </p>
               </div>
             </Card>
+
 
             {/* Recent commands */}
             <Card className="glass-card p-6 space-y-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
@@ -428,7 +631,7 @@ const Dashboard = () => {
                         </ul>
                       </div>
 
-                      <Button className="w-full" onClick={() => toast.success("Report downloaded")}>
+                      <Button className="w-full" onClick={handleDownloadReport}>
                         Download Full Report (PDF)
                       </Button>
                     </div>

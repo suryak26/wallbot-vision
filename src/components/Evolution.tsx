@@ -19,11 +19,11 @@ const stages = [
     details: "Added real-time camera feed with WiFi streaming capability"
   },
   {
-    id: "tinyml",
-    title: "TinyML Integration",
+    id: "vision",
+    title: "Vision System Integration",
     description: "Onboard AI model for crack and defect detection",
     icon: Brain,
-    details: "Edge inference enables instant alerts without cloud dependency"
+    details: "In-stream inference enables instant alerts and precise crack mapping"
   },
   {
     id: "safety",
@@ -49,7 +49,7 @@ export const Evolution = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 space-y-4 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold">
-            Evolution of <span className="gradient-text">S4V-WallBot</span>
+            Evolution of <span className="gradient-text">Roctara</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             From concept to fully autonomous inspection platform
@@ -82,24 +82,9 @@ export const Evolution = () => {
                     <p className="text-sm text-muted-foreground">{stage.description}</p>
                   </div>
 
-                  <div className="bg-muted/30 rounded-lg p-3 border border-dashed border-border">
-                    <p className="text-xs text-muted-foreground text-center italic">
-                      3D model thumbnail
-                    </p>
-                  </div>
-
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     {stage.details}
                   </p>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => navigate("/explore")}
-                  >
-                    View 3D Model
-                  </Button>
                 </Card>
               </div>
             ))}

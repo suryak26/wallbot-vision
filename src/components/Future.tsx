@@ -4,8 +4,8 @@ const Future = () => {
   const futureFeatures = [
     {
       icon: Brain,
-      title: "Advanced TinyML Models",
-      description: "Integration of lightweight AI models for multi-class defect detection, material classification, and predictive maintenance algorithms"
+      title: "Modular Sensor Payloads",
+      description: "Interchangeable modules for thermal imaging, gas detection, and ultrasonic surface thickness measurements"
     },
     {
       icon: Bot,
@@ -73,7 +73,7 @@ const Future = () => {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-            These innovations will transform S4V-WallBot from an inspection tool into a comprehensive 
+            These innovations will transform Roctara from an inspection tool into a comprehensive 
             autonomous platform for infrastructure health monitoring and maintenance.
           </p>
         </div>

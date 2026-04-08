@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Gamepad2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import heroImage from "@/assets/hero-robot.jpg";
+import { RobotScene } from "./RobotScene";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export const Hero = () => {
   const navigate = useNavigate();
@@ -35,14 +36,14 @@ export const Hero = () => {
             className="space-y-8 animate-fade-in"
             style={{ transform: `translateY(${scrollY * 0.1}px)` }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-sm">
-              <div className="status-dot status-online" />
-              <span className="text-sm text-muted-foreground">System Online</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 border border-destructive/30 backdrop-blur-sm">
+              <div className="status-dot status-offline" />
+              <span className="text-sm text-muted-foreground">System Not Connected</span>
             </div>
 
             <div className="space-y-4">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-                <span className="gradient-text">Roc_tara</span>
+                <span className="gradient-text">Roctara</span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground font-light">
                 Scaling Heights. Detecting Cracks. Ensuring Safety.
@@ -50,7 +51,7 @@ export const Hero = () => {
             </div>
 
             <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-              Autonomous wall-climbing inspector with onboard TinyML and real-time IoT telemetry.
+              Autonomous wall-climbing inspector with onboard Edge AI and real-time IoT telemetry.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -79,8 +80,8 @@ export const Hero = () => {
 
             <div className="flex items-center gap-8 pt-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success animate-pulse-glow" />
-                <span>TinyML Enabled</span>
+                <div className="w-3 h-3 rounded-full bg-primary animate-pulse-glow" />
+                <span>Edge Analytics</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-primary animate-pulse-glow" />
@@ -97,13 +98,16 @@ export const Hero = () => {
               animationDelay: "0.2s" 
             }}
           >
-            <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_80px_hsl(var(--primary)/0.3)]">
-              <img
-                src={heroImage}
-                alt="Roc_tara autonomous wall-climbing robot"
-                className="w-full h-auto object-cover animate-float"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+            <div className="relative rounded-2xl overflow-hidden border border-primary/20 bg-black/40 shadow-[0_0_80px_hsl(var(--primary)/0.2)] min-h-[500px] flex items-center justify-center">
+              <ErrorBoundary fallback={
+                <div className="text-primary/20 text-center space-y-2">
+                  <Bot className="w-12 h-12 mx-auto animate-pulse" />
+                  <p className="font-mono text-xs uppercase tracking-widest">3D Component Unavailable</p>
+                </div>
+              }>
+                <RobotScene />
+              </ErrorBoundary>
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
             </div>
 
             {/* Floating info cards */}
@@ -113,8 +117,8 @@ export const Hero = () => {
                   <Bot className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">AI Detection</p>
-                  <p className="text-xs text-muted-foreground">99.2% Accuracy</p>
+                  <p className="text-sm font-medium">Precision Diagnostics</p>
+                  <p className="text-xs text-muted-foreground">Adaptive Surface Mapping</p>
                 </div>
               </div>
             </div>

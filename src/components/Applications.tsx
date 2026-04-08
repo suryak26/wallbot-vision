@@ -37,7 +37,7 @@ const applications = [
     icon: Plane,
     title: "Aircraft & Vehicles",
     useCase: "Inspect aircraft fuselages, ship hulls, and railway infrastructure for fatigue cracks and paint deterioration.",
-    example: "Aircraft fuselage check: Completed full exterior inspection in 45 minutes vs. 8 hours manual, with 99.5% defect detection accuracy."
+    example: "Aircraft fuselage check: Completed full exterior inspection in 45 minutes vs. 8 hours manual, providing detailed surface diagnostics map."
   },
   {
     id: "solar",
